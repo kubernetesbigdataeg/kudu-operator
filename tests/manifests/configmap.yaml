@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kudu-config
+  namespace: apache-kudu
+data:
+  kudu.env: |
+    export KUDU__kudumaster__master_addresses=kudu-master-0.kudu-masters.apache-kudu.svc.cluster.local,kudu-master-1.kudu-masters.apache-kudu.svc.cluster.local,kudu-master-2.kudu-masters.apache-kudu.svc.cluster.local
+    export KUDU__kudumaster__webserver_doc_root=/opt/kudu/usr/local/www
+    export KUDU__kudumaster__log_dir=/var/log/kudu
+    export KUDU__kudumaster__fs_wal_dir=/var/lib/kudu/wal
+    export KUDU__kudumaster__fs_data_dirs=/var/lib/kudu/data
+    export KUDU__kudumaster__rpc_encryption=optional
+    export KUDU__kudumaster__rpc_authentication=optional
+    export KUDU__kudumaster__rpc_negotiation_timeout_ms=5000
+    export KUDU__kuduworker__tserver_master_addrs=kudu-master-0.kudu-masters.apache-kudu.svc.cluster.local,kudu-master-1.kudu-masters.apache-kudu.svc.cluster.local,kudu-master-2.kudu-masters.apache-kudu.svc.cluster.local
+    export KUDU__kuduworker__webserver_doc_root=/opt/kudu/usr/local/www
+    export KUDU__kuduworker__log_dir=/var/log/kudu
+    export KUDU__kuduworker__fs_wal_dir=/var/lib/kudu/wal
+    export KUDU__kuduworker__fs_data_dirs=/var/lib/kudu/data
+    export KUDU__kuduworker__rpc_encryption=optional
+    export KUDU__kuduworker__rpc_authentication=optional
+    export KUDU__kuduworker__rpc_negotiation_timeout_ms=5000

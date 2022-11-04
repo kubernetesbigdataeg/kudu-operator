@@ -1,0 +1,55 @@
+# headless service for kudu masters
+apiVersion: v1
+kind: Service
+metadata:
+  name: kudu-masters
+  namespace: apache-kudu
+  labels:
+    app: kudu-master
+spec:
+  clusterIP: None
+  ports:
+    - name: ui
+      port: 8051
+    - name: rpc-port
+      port: 7051
+  selector:
+    app: kudu-master
+---
+# headless service for masters
+apiVersion: v1
+kind: Service
+metadata:
+  name: kudu-master-ui
+  namespace: apache-kudu
+  labels:
+    app: kudu-master
+spec:
+  clusterIP:
+  ports:
+    - name: ui
+      port: 8051
+      nodePort: 30004
+  selector:
+    app: kudu-master
+  type: NodePort
+  target-port:
+  externalTrafficPolicy: Local
+---
+# headless service for tservers
+apiVersion: v1
+kind: Service
+metadata:
+  name: kudu-tservers
+  namespace: apache-kudu
+  labels:
+    app: kudu-tserver
+spec:
+  clusterIP: None
+  ports:
+    - name: ui
+      port: 8050
+    - name: rpc-port
+      port: 7050
+  selector:
+    app: kudu-tserver
