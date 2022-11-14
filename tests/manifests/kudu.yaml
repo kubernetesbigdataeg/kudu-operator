@@ -1,0 +1,212 @@
+apiVersion: v1
+data:
+  kudu.env: |
+    export KUDU__kudumaster__master_addresses=kudu-master-0.kudu-masters.apache-kudu.svc.cluster.local,kudu-master-1.kudu-masters.apache-kudu.svc.cluster.local,kudu-master-2.kudu-masters.apache-kudu.svc.cluster.local
+    export KUDU__kudumaster__webserver_doc_root=/opt/kudu/usr/local/www
+    export KUDU__kudumaster__log_dir=/var/log/kudu
+    export KUDU__kudumaster__fs_wal_dir=/var/lib/kudu/wal
+    export KUDU__kudumaster__fs_data_dirs=/var/lib/kudu/data
+    export KUDU__kudumaster__rpc_encryption=optional
+    export KUDU__kudumaster__rpc_authentication=optional
+    export KUDU__kudumaster__rpc_negotiation_timeout_ms=5000
+    export KUDU__kuduworker__tserver_master_addrs=kudu-master-0.kudu-masters.apache-kudu.svc.cluster.local,kudu-master-1.kudu-masters.apache-kudu.svc.cluster.local,kudu-master-2.kudu-masters.apache-kudu.svc.cluster.local
+    export KUDU__kuduworker__webserver_doc_root=/opt/kudu/usr/local/www
+    export KUDU__kuduworker__log_dir=/var/log/kudu
+    export KUDU__kuduworker__fs_wal_dir=/var/lib/kudu/wal
+    export KUDU__kuduworker__fs_data_dirs=/var/lib/kudu/data
+    export KUDU__kuduworker__rpc_encryption=optional
+    export KUDU__kuduworker__rpc_authentication=optional
+    export KUDU__kuduworker__rpc_negotiation_timeout_ms=5000
+kind: ConfigMap
+metadata:
+  name: kudu-config
+  namespace: apache-kudu
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: kudu-master
+  name: kudu-master-ui
+  namespace: apache-kudu
+spec:
+  clusterIP: null
+  externalTrafficPolicy: Local
+  ports:
+  - name: ui
+    nodePort: 30004
+    port: 8051
+  selector:
+    app: kudu-master
+  target-port: null
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: kudu-master
+  name: kudu-masters
+  namespace: apache-kudu
+spec:
+  clusterIP: None
+  ports:
+  - name: ui
+    port: 8051
+  - name: rpc-port
+    port: 7051
+  selector:
+    app: kudu-master
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: kudu-tserver
+  name: kudu-tservers
+  namespace: apache-kudu
+spec:
+  clusterIP: None
+  ports:
+  - name: ui
+    port: 8050
+  - name: rpc-port
+    port: 7050
+  selector:
+    app: kudu-tserver
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: kudu-master
+  name: kudu-master
+  namespace: apache-kudu
+spec:
+  podManagementPolicy: Parallel
+  replicas: 3
+  selector:
+    matchLabels:
+      app: kudu-master
+  serviceName: kudu-masters
+  template:
+    metadata:
+      labels:
+        app: kudu-master
+    spec:
+      containers:
+      - args:
+        - master
+        env:
+        - name: GET_HOSTS_FROM
+          value: dns
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        image: kubernetesbigdataeg/kudu:1.17.0-1
+        imagePullPolicy: Always
+        name: kudu-master
+        ports:
+        - containerPort: 8051
+          name: master-ui
+        - containerPort: 7051
+          name: master-rpc
+        volumeMounts:
+        - mountPath: /mnt/data0
+          name: datadir
+        - mountPath: /etc/environments
+          name: kudu-env
+        - mountPath: /opt/kudu/conf
+          name: kudu-config
+      volumes:
+      - configMap:
+          name: kudu-config
+        name: kudu-env
+      - hostPath:
+          path: /kudu-config
+        name: kudu-config
+  updateStrategy:
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - metadata:
+      name: datadir
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: kudu-tserver
+  name: kudu-tserver
+  namespace: apache-kudu
+spec:
+  podManagementPolicy: Parallel
+  replicas: 4
+  selector:
+    matchLabels:
+      app: kudu-tserver
+  serviceName: kudu-tservers
+  template:
+    metadata:
+      labels:
+        app: kudu-tserver
+    spec:
+      containers:
+      - args:
+        - tserver
+        env:
+        - name: GET_HOSTS_FROM
+          value: dns
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        image: kubernetesbigdataeg/kudu:1.17.0-1
+        imagePullPolicy: Always
+        name: kudu-tserver
+        ports:
+        - containerPort: 8050
+          name: tserver-ui
+        - containerPort: 7050
+          name: tserver-rpc
+        volumeMounts:
+        - mountPath: /mnt/data0
+          name: datadir
+        - mountPath: /etc/environments
+          name: kudu-env
+        - mountPath: /opt/kudu/conf
+          name: kudu-config
+      volumes:
+      - configMap:
+          name: kudu-config
+        name: kudu-env
+      - hostPath:
+          path: /kudu-config
+        name: kudu-config
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - metadata:
+      name: datadir
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
