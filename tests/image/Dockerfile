@@ -5,8 +5,7 @@ RUN yum -y install sudo
 
 RUN sudo yum install -y cyrus-sasl-gssapi cyrus-sasl-plain cyrus-sasl-devel krb5-server krb5-workstation openssl lzo-devel tzdata
 RUN yum -y install httpd; yum clean all; systemctl enable httpd.service
-RUN sudo mkdir -p /var/lib/kudu/wal && \
-  sudo mkdir -p /var/lib/kudu/data && \
+RUN sudo mkdir -p /var/lib/kudu && \
   sudo mkdir -p /var/log/kudu
 
 RUN sudo adduser -r kudu && \
@@ -19,7 +18,7 @@ RUN sudo tar xvzf kudu-1.17.0-SNAPSHOT.tar.gz -C / && \
   rm /kudu-1.17.0-SNAPSHOT.tar.gz
 
 RUN yum install -y wget && \
-  wget https://github.com/kubernetesbigdataeg/propgen/releases/download/release-latest/propgen
+  wget https://github.com/kubernetesbigdataeg/propgen/releases/latest/download/propgen
 
 COPY docker-entrypoint.sh /
 RUN chmod 777 /docker-entrypoint.sh && chmod 777 propgen
