@@ -18,7 +18,7 @@ if [[ "$1" = 'master' ]]; then
 elif [[ "$1" = 'tserver' ]]; then
 
   source /etc/environments/kudu.env
-  ./propgen -label KUDU -render kuduworker -file /opt/kudu/conf/tserver.gflagfile
+  ./propgen -label KUDU -render kudutserver -file /opt/kudu/conf/tserver.gflagfile
   sudo chown kudu: /opt/kudu/conf/tserver.gflagfile
   create_data_folders
   exec /opt/kudu/usr/local/sbin/kudu-tserver --flagfile=/opt/kudu/conf/tserver.gflagfile
