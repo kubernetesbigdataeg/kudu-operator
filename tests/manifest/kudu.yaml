@@ -162,7 +162,7 @@ spec:
           - containerPort: 7050
             name: tserver-rpc
           volumeMounts:
-          - mountPath: /var/data0
+          - mountPath: /var/lib/kudu/
             name: datadir
           - mountPath: /etc/environments
             name: kudu-env
@@ -190,7 +190,7 @@ spec:
     spec:
       accessModes:
       - ReadWriteOnce
-      #storageClassName: fast-disks
+      storageClassName: fast-disks
       resources:
         requests:
           storage: 200Mi
