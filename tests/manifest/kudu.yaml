@@ -90,7 +90,7 @@ spec:
           - containerPort: 7051
             name: master-rpc
           volumeMounts:
-          - mountPath: /mnt/data0
+          - mountPath: /var/lib/kudu/
             name: datadir
           - mountPath: /etc/environments
             name: kudu-env
@@ -116,7 +116,7 @@ spec:
     spec:
       accessModes:
       - ReadWriteOnce
-      #storageClassName: fast-disks
+      storageClassName: fast-disks
       resources:
         requests:
           storage: 200Mi
