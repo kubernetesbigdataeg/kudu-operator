@@ -1,0 +1,29 @@
+domain: kubernetesbigdataeg.org
+layout:
+- go.kubebuilder.io/v3
+plugins:
+  deploy-image.go.kubebuilder.io/v1-alpha:
+    resources:
+    - domain: kubernetesbigdataeg.org
+      group: bigdata
+      kind: Kudu
+      options:
+        containerCommand: memcached,-m=64,modern,-v
+        image: docker.io/kubernetesbigdataeg/kudu:1.17.0-2
+        runAsUser: "1000"
+      version: v1alpha1
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: kudu-operator
+repo: github.com/kubernetesbigdataeg/kudu-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kubernetesbigdataeg.org
+  group: bigdata
+  kind: Kudu
+  path: github.com/kubernetesbigdataeg/kudu-operator/api/v1alpha1
+  version: v1alpha1
+version: "3"
