@@ -2,7 +2,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kudu-master-ui
-  namespace: kudu  
   labels:
     app: kudu-master
 spec:
@@ -18,7 +17,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kudu-master-svc
-  namespace: kudu
   labels:
     app: kudu-master
 spec:
@@ -35,7 +33,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kudu-tserver-svc
-  namespace: kudu    
   labels:
     app: kudu-tserver
 spec:
@@ -52,12 +49,11 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: kudu-master
-  namespace: kudu   
   labels:
     app: kudu-master
 spec:
   podManagementPolicy: Parallel
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: kudu-master
@@ -94,14 +90,14 @@ spec:
             name: datadir
           - mountPath: /etc/environments
             name: kudu-env
-          - name: kudu-logs
-            mountPath: /tmp/
+          - mountPath: /var/log/kudu
+            name: kudu-logs
         - name: kudu-master-logs
           image: busybox:1.28
           args: [/bin/sh, -c, 'tail -n+1 -F /var/log/kudu/kudu-master.INFO']
           volumeMounts:
-          - name: kudu-logs
-            mountPath: /tmp/
+          - mountPath: /var/log/kudu
+            name: kudu-logs
       volumes:
         - name: kudu-logs
           emptyDir: {}
@@ -116,21 +112,19 @@ spec:
     spec:
       accessModes:
       - ReadWriteOnce
-      storageClassName: fast-disks
       resources:
         requests:
-          storage: 200Mi
+          storage: 1Gi
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: kudu-tserver
-  namespace: kudu   
   labels:
     app: kudu-tserver
 spec:
   podManagementPolicy: Parallel
-  replicas: 4
+  replicas: 3
   selector:
     matchLabels:
       app: kudu-tserver
@@ -166,14 +160,14 @@ spec:
             name: datadir
           - mountPath: /etc/environments
             name: kudu-env
-          - name: kudu-logs
-            mountPath: /tmp/
+          - mountPath: /var/log/kudu
+            name: kudu-logs
         - name: kudu-tserver-logs
           image: busybox:1.28
           args: [/bin/sh, -c, 'tail -n+1 -F /var/log/kudu/kudu-tserver.INFO']
           volumeMounts:
-          - name: kudu-logs
-            mountPath: /tmp/
+          - mountPath: /var/log/kudu
+            name: kudu-logs
       volumes:
         - name: kudu-logs
           emptyDir: {}
@@ -190,19 +184,17 @@ spec:
     spec:
       accessModes:
       - ReadWriteOnce
-      storageClassName: fast-disks
       resources:
         requests:
-          storage: 200Mi
+          storage: 1Gi
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: kudu-config
-  namespace: kudu
 data:
   kudu.env: |
-    export KUDU__kudumaster__master_addresses=kudu-master-0.kudu-master-svc.kudu.svc.cluster.local:7051,kudu-master-1.kudu-master-svc.kudu.svc.cluster.local:7051,kudu-master-2.kudu-master-svc.kudu.svc.cluster.local:7051
+    export KUDU__kudumaster__master_addresses=kudu-master-0.kudu-master-svc.default.svc.cluster.local:7051
     export KUDU__kudumaster__webserver_doc_root=/opt/kudu/usr/local/www
     export KUDU__kudumaster__logtostderr=false
     export KUDU__kudumaster__log_dir=/var/log/kudu
@@ -211,8 +203,8 @@ data:
     export KUDU__kudumaster__rpc_encryption=optional
     export KUDU__kudumaster__rpc_authentication=optional
     export KUDU__kudumaster__rpc_negotiation_timeout_ms=5000
-    export KUDU__kudumaster__hive_metastore_uris=thrift://hive-svc.kudu.svc.cluster.local:9083
-    export KUDU__kudutserver__tserver_master_addrs=kudu-master-0.kudu-master-svc.kudu.svc.cluster.local:7051,kudu-master-1.kudu-master-svc.kudu.svc.cluster.local:7051,kudu-master-2.kudu-master-svc.kudu.svc.cluster.local:7051
+    export KUDU__kudumaster__hive_metastore_uris=thrift://hive-svc.default.svc.cluster.local:9083
+    export KUDU__kudutserver__tserver_master_addrs=kudu-master-0.kudu-master-svc.default.svc.cluster.local:7051
     export KUDU__kudutserver__webserver_doc_root=/opt/kudu/usr/local/www
     export KUDU__kudutserver__logtostderr=false
     export KUDU__kudutserver__log_dir=/var/log/kudu
